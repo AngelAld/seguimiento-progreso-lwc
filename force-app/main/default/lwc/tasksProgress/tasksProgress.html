@@ -1,0 +1,18 @@
+<template>
+    <template if:true={error}>
+        <lightning-card title="Progreso de Tareas" icon-name="standard:indicator_performance_period">
+            <p class="slds-text-color_error">Error al cargar los datos.</p>
+        </lightning-card>
+    </template>
+
+    <template if:false={error}>
+        <lightning-card title="Progreso de Tareas" icon-name="standard:indicator_performance_period">
+            <div class="slds-p-horizontal_small">
+                <p>{completados} de {total} completadas ({porcentaje}%)</p>
+            </div>
+            <div slot="footer">
+                <lightning-progress-bar value={porcentaje} size="medium"></lightning-progress-bar>
+            </div>
+        </lightning-card>
+    </template>
+</template>
