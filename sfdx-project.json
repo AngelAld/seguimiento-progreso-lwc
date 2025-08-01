@@ -1,0 +1,12 @@
+{
+  "packageDirectories": [
+    {
+      "path": "force-app",
+      "default": true
+    }
+  ],
+  "name": "seguimiento-progreso",
+  "namespace": "",
+  "sfdcLoginUrl": "https://orgfarm-e03a7db951-dev-ed.develop.my.salesforce.com",
+  "sourceApiVersion": "64.0"
+}
