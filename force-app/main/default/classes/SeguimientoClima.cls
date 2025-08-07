@@ -66,11 +66,11 @@ public with sharing class SeguimientoClima {
     private static String getApiKey() {
         try {
             // Query Custom Metadata Type for OpenWeather API Key
-            ApiKeys__mdt apiKeyRecord = [SELECT API_Key__c 
-                                        FROM ApiKeys__mdt 
+            ApiKey__mdt apiKeyRecord = [SELECT key__c 
+                                        FROM ApiKey__mdt 
                                         WHERE Label = 'OpenWeather' 
                                         LIMIT 1];
-            return apiKeyRecord.API_Key__c;
+            return apiKeyRecord.key__c;
         } catch (Exception e) {
             System.debug('Error retrieving API Key from Custom Metadata: ' + e.getMessage());
             return null;
