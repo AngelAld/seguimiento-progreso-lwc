@@ -1,13 +1,10 @@
 public with sharing class SeguimientoClima {
     
-    private static final String API_BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
-    private static final String API_KEY = '70420016226aabcf7677e4703d9714ed';
-    
+    private static final String NAMED_CREDENTIAL = 'callout:OpenWeather';
     
     @future(callout=true)
     public static void obtenerClimaParaSeguimientos(Set<Id> seguimientoIds) {
         try {
-            // Query the Seguimiento records to get location information
             List<Seguimiento__c> seguimientos = [SELECT Id, Ubicacion__c 
                                                FROM Seguimiento__c 
                                                WHERE Id IN :seguimientoIds 
@@ -17,7 +14,7 @@ public with sharing class SeguimientoClima {
             
             for (Seguimiento__c seguimiento : seguimientos) {
                 String weatherData = obtenerDatosClimaSync(seguimiento.Ubicacion__c);
-                if (String.isNotBlank(weatherData)) {
+                if (String.isNotBlank(weatherData) && !weatherData.startsWith('Error') && !weatherData.startsWith('Sin')) {
                     seguimiento.Clima_Actual__c = weatherData;
                     seguimientosToUpdate.add(seguimiento);
                 }
@@ -35,15 +32,21 @@ public with sharing class SeguimientoClima {
     
     private static String obtenerDatosClimaSync(String cityName) {
         try {
-            // Build the API URL
-            String apiUrl = API_BASE_URL + '?q=' + EncodingUtil.urlEncode(cityName, 'UTF-8') + '&appid=' + API_KEY + '&units=metric';
+            // Get API key from Custom Metadata Type
+            String apiKey = getApiKey();
+            if (String.isBlank(apiKey)) {
+                System.debug('API Key not found in Custom Metadata Type');
+                return 'Error: API Key no configurada';
+            }
             
-            // Make the HTTP callout
+            // Build the API URL using Named Credential
+            String apiUrl = NAMED_CREDENTIAL + '/data/2.5/weather?q=' + EncodingUtil.urlEncode(cityName, 'UTF-8') + '&units=metric&appid=' + apiKey;
+            
             Http http = new Http();
             HttpRequest request = new HttpRequest();
             request.setEndpoint(apiUrl);
             request.setMethod('GET');
-            request.setTimeout(10000); // 10 seconds timeout
+            request.setTimeout(10000);
             
             HttpResponse response = http.send(request);
             
@@ -51,21 +54,33 @@ public with sharing class SeguimientoClima {
                 return procesarDatosClimaParaCampo(response.getBody(), cityName);
             } else {
                 System.debug('Error calling Weather API for ' + cityName + '. Status Code: ' + response.getStatusCode());
-                return 'Error obteniendo clima';
+                return 'Error API';
             }
             
         } catch (Exception e) {
             System.debug('Exception occurred while calling Weather API for ' + cityName + ': ' + e.getMessage());
-            return 'Error: ' + e.getMessage();
+            return 'Sin conexión';
+        }
+    }
+    
+    private static String getApiKey() {
+        try {
+            // Query Custom Metadata Type for OpenWeather API Key
+            ApiKeys__mdt apiKeyRecord = [SELECT API_Key__c 
+                                        FROM ApiKeys__mdt 
+                                        WHERE Label = 'OpenWeather' 
+                                        LIMIT 1];
+            return apiKeyRecord.API_Key__c;
+        } catch (Exception e) {
+            System.debug('Error retrieving API Key from Custom Metadata: ' + e.getMessage());
+            return null;
         }
     }
     
     private static String procesarDatosClimaParaCampo(String jsonResponse, String cityName) {
         try {
-            // Parse JSON response
             Map<String, Object> weatherData = (Map<String, Object>) JSON.deserializeUntyped(jsonResponse);
             
-            // Extract weather information
             Map<String, Object> main = (Map<String, Object>) weatherData.get('main');
             List<Object> weatherArray = (List<Object>) weatherData.get('weather');
             Map<String, Object> weather = (Map<String, Object>) weatherArray[0];
@@ -75,19 +90,15 @@ public with sharing class SeguimientoClima {
             String description = (String) weather.get('description');
             String mainWeather = (String) weather.get('main');
             
-            // Format the weather data as a readable string
-            String climaActual = mainWeather + ' - ' + description +
-                ', Temperatura: ' + temperature.intValue() + '°C' +
-                ', Humedad: ' + humidity.intValue() + '%';
+            // Formato más corto para que quepa en el campo
+            String climaActual = mainWeather + ', ' + temperature.intValue() + '°C, ' + humidity.intValue() + '%';
             
             System.debug('Weather data for ' + cityName + ': ' + climaActual);
             return climaActual;
             
         } catch (Exception e) {
             System.debug('Error processing weather data for ' + cityName + ': ' + e.getMessage());
-            return 'Error procesando datos del clima';
+            return 'Error procesando';
         }
     }
-    
-    
 }

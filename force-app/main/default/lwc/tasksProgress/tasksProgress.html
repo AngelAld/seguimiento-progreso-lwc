@@ -1,18 +1,81 @@
 <template>
+    <template if:true={isLoading}>
+        <lightning-card title="Progreso de Tareas y Seguimientos" icon-name="standard:indicator_performance_period">
+            <div class="slds-p-horizontal_small">
+                <lightning-spinner alternative-text="Cargando datos..."></lightning-spinner>
+            </div>
+        </lightning-card>
+    </template>
+
     <template if:true={error}>
-        <lightning-card title="Progreso de Tareas" icon-name="standard:indicator_performance_period">
-            <p class="slds-text-color_error">Error al cargar los datos.</p>
+        <lightning-card title="Progreso de Tareas y Seguimientos" icon-name="standard:indicator_performance_period">
+            <div class="slds-p-horizontal_small">
+                <p class="slds-text-color_error">Error al cargar los datos: {error.body.message}</p>
+            </div>
         </lightning-card>
     </template>
 
     <template if:false={error}>
-        <lightning-card title="Progreso de Tareas" icon-name="standard:indicator_performance_period">
-            <div class="slds-p-horizontal_small">
-                <p>{completados} de {total} completadas ({porcentaje}%)</p>
-            </div>
-            <div slot="footer">
-                <lightning-progress-bar value={porcentaje} size="medium"></lightning-progress-bar>
-            </div>
-        </lightning-card>
+        <template if:false={isLoading}>
+            <lightning-card title="Progreso de Tareas y Seguimientos" icon-name="standard:indicator_performance_period">
+                <div class="slds-p-horizontal_small slds-p-vertical_small">
+                    <!-- Sección de Tareas -->
+                    <div class="slds-m-bottom_medium">
+                        <h3 class="slds-text-heading_small slds-m-bottom_x-small">Tareas</h3>
+                        <p class="slds-m-bottom_small">{completados} de {total} completadas ({porcentaje}%)</p>
+                        <lightning-progress-bar value={porcentaje} size="medium"></lightning-progress-bar>
+                    </div>
+
+                    <!-- Sección de Seguimientos -->
+                    <div class="slds-m-bottom_medium">
+                        <h3 class="slds-text-heading_small slds-m-bottom_small">Seguimientos</h3>
+                        
+                        <!-- Seguimiento más reciente -->
+                        <div class="slds-box slds-box_xx-small slds-m-bottom_small">
+                            <div class="slds-grid slds-grid_vertical-align-center">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <p class="slds-text-body_small slds-text-color_weak">Más reciente:</p>
+                                    <p class="slds-text-body_regular slds-truncate" title={nombreSeguimientoReciente}>
+                                        {nombreSeguimientoReciente}
+                                    </p>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-text-align_right">
+                                    <p class="slds-text-body_small slds-text-color_weak">Clima:</p>
+                                    <p class="slds-text-body_regular">{climaActual}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estadísticas por etapa -->
+                        <div class="slds-grid slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-3">
+                                <div class="slds-text-align_center slds-p-around_x-small" style="background-color: #ffeaa7; border-radius: 4px;">
+                                    <p class="slds-text-heading_medium">{pendientes}</p>
+                                    <p class="slds-text-body_small">Pendiente</p>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3">
+                                <div class="slds-text-align_center slds-p-around_x-small" style="background-color: #74b9ff; border-radius: 4px;">
+                                    <p class="slds-text-heading_medium">{enProceso}</p>
+                                    <p class="slds-text-body_small">En Proceso</p>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3">
+                                <div class="slds-text-align_center slds-p-around_x-small" style="background-color: #00b894; border-radius: 4px;">
+                                    <p class="slds-text-heading_medium">{completadosSeguimientos}</p>
+                                    <p class="slds-text-body_small">Completado</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="slds-text-align_center slds-m-top_small">
+                            <p class="slds-text-body_small slds-text-color_weak">
+                                Total de seguimientos: {totalSeguimientos}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </lightning-card>
+        </template>
     </template>
 </template>
